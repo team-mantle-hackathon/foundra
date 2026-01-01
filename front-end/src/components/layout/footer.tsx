@@ -13,7 +13,7 @@ export default function FooterLayout(): ReactNode {
           <div className="space-y-4">
             <div className="text-xl font-black text-slate-100 uppercase italic tracking-tighter flex items-center gap-2">
               <div className="w-2 h-5 bg-emerald-500 rounded-full" />
-              RWA Lending <span className="text-emerald-500">AI</span>
+              FOUNDRA
             </div>
             <p className="text-[12px] text-slate-500 max-w-xs font-bold uppercase tracking-wider">
               Institutional debt infrastructure for global real-world assets.
@@ -59,7 +59,7 @@ export default function FooterLayout(): ReactNode {
         {/* BOTTOM STRIP */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-4">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            © 2025 RWA LENDING PROTOCOL
+            © 2025 FOUNDRA
           </p>
         </div>
 

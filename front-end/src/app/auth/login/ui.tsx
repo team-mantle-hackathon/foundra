@@ -128,7 +128,7 @@ export default function Login(): ReactNode {
               
                   if (!account) {
                     return (
-                      <Button type="button" className="w-xl rounded-lg bg-emerald-600 hover:bg-emerald-800 cursor-pointer" onClick={openConnectModal}>
+                      <Button type="button" className="w-52 rounded-lg bg-emerald-600 hover:bg-emerald-800 cursor-pointer" onClick={openConnectModal}>
                         Connect Wallet
                       </Button>
                     );

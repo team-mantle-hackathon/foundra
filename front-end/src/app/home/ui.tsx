@@ -30,14 +30,14 @@ export default function Home(): ReactNode {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            {/*<div className="flex flex-wrap items-center gap-4">
               <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 h-12">
                 Launch App <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
               <Button size="lg" variant="outline" className="border-slate-800 bg-slate-900/50 hover:bg-slate-800 hover:text-white font-bold px-8 h-12">
                 For Project Owner
               </Button>
-            </div>
+            </div>*/}
           </div>
 
           {/* HERO STATS CARD - UPDATED TO PROTOCOL STATS */}
