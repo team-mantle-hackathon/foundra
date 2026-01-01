@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "front-end/**"
-      - ".github/workflows/fly-web.yml"
+      - ".github/workflows/fly-deploy.yml"
 
 jobs:
   deploy:
@@ -34,5 +34,6 @@ jobs:
           --build-arg VITE_RECLAIM_APP_ID=${{ secrets.VITE_RECLAIM_APP_ID }} \
           --build-arg VITE_RECLAIM_APP_SECRET=${{ secrets.VITE_RECLAIM_APP_SECRET }} \
           --build-arg VITE_RECLAIM_PROVIDER_ID=${{ secrets.VITE_RECLAIM_PROVIDER_ID }}
+        working-directory: front-end
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
