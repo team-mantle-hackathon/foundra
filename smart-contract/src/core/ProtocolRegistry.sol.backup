@@ -1,0 +1,334 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "../interfaces/IProtocolRegistry.sol";
+import "../interfaces/IRiskOracle.sol";
+
+/**
+ * @title ProtocolRegistry
+ * @notice Central registry for managing developers, projects, and protocol configuration
+ */
+contract ProtocolRegistry is
+    IProtocolRegistry,
+    AccessControl,
+    Pausable,
+    ReentrancyGuard
+{
+    // Roles
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant RISK_ASSESSOR_ROLE =
+        keccak256("RISK_ASSESSOR_ROLE");
+
+    // State variables
+    mapping(address => DeveloperInfo) private developers;
+    mapping(uint256 => ProjectProposal) private projects;
+    mapping(address => uint256[]) private developerProjects;
+    mapping(uint256 => address) public projectToVault;
+
+    uint256 private projectCounter;
+    uint256 public minInvestment;
+    uint256 public protocolFee; // In basis points
+
+    address public vaultFactory;
+    address public riskOracle;
+    address public treasury;
+
+    // Events from interface already defined
+
+    constructor(
+        uint256 _minInvestment,
+        uint256 _protocolFee,
+        address _treasury
+    ) {
+        require(_treasury != address(0), "Invalid treasury");
+        require(_protocolFee <= 1000, "Fee too high"); // Max 10%
+
+        minInvestment = _minInvestment;
+        protocolFee = _protocolFee;
+        treasury = _treasury;
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+    }
+
+    // ============================================
+    // Developer Management
+    // ============================================
+
+    function registerDeveloper(
+        string calldata companyName,
+        string calldata registrationNumber,
+        string calldata businessLicense
+    ) external whenNotPaused {
+        require(bytes(companyName).length > 0, "Invalid company name");
+        require(bytes(registrationNumber).length > 0, "Invalid registration");
+        require(!developers[msg.sender].isActive, "Already registered");
+
+        developers[msg.sender] = DeveloperInfo({
+            developerAddress: msg.sender,
+            companyName: companyName,
+            registrationNumber: registrationNumber,
+            businessLicense: businessLicense,
+            isApproved: false,
+            isActive: true,
+            registrationTime: block.timestamp,
+            totalProjectsCreated: 0,
+            totalProjectsCompleted: 0,
+            totalDefaulted: 0
+        });
+
+        emit DeveloperRegistered(msg.sender, companyName, block.timestamp);
+    }
+
+    function approveDeveloper(address developer) external onlyRole(ADMIN_ROLE) {
+        require(developers[developer].isActive, "Developer not registered");
+        require(!developers[developer].isApproved, "Already approved");
+
+        developers[developer].isApproved = true;
+
+        emit DeveloperApproved(developer, msg.sender, block.timestamp);
+    }
+
+    function suspendDeveloper(
+        address developer,
+        string calldata reason
+    ) external onlyRole(ADMIN_ROLE) {
+        require(developers[developer].isActive, "Not active");
+
+        developers[developer].isActive = false;
+
+        emit DeveloperSuspended(developer, reason, block.timestamp);
+    }
+
+    function reactivateDeveloper(
+        address developer
+    ) external onlyRole(ADMIN_ROLE) {
+        require(developers[developer].isApproved, "Not approved");
+        require(!developers[developer].isActive, "Already active");
+
+        developers[developer].isActive = true;
+    }
+
+    // ============================================
+    // Project Management
+    // ============================================
+
+    function proposeProject(
+        string calldata projectName,
+        string calldata location,
+        uint256 estimatedBudget,
+        uint256 requestedAmount,
+        uint256 estimatedDuration,
+        string calldata documents
+    ) external whenNotPaused returns (uint256 projectId) {
+        require(developers[msg.sender].isApproved, "Developer not approved");
+        require(developers[msg.sender].isActive, "Developer not active");
+        require(bytes(projectName).length > 0, "Invalid project name");
+        require(requestedAmount > 0, "Invalid amount");
+        require(requestedAmount <= estimatedBudget, "Amount exceeds budget");
+        require(estimatedDuration >= 30 days, "Duration too short");
+
+        projectId = ++projectCounter;
+
+        projects[projectId] = ProjectProposal({
+            developer: msg.sender,
+            projectName: projectName,
+            location: location,
+            estimatedBudget: estimatedBudget,
+            requestedAmount: requestedAmount,
+            estimatedDuration: estimatedDuration,
+            documents: documents,
+            aiRiskGrade: "",
+            aiRiskScore: 0,
+            isApproved: false,
+            proposalTime: block.timestamp
+        });
+
+        developerProjects[msg.sender].push(projectId);
+        developers[msg.sender].totalProjectsCreated++;
+
+        emit ProjectProposed(
+            projectId,
+            msg.sender,
+            projectName,
+            requestedAmount
+        );
+
+        // Automatically request AI risk assessment if oracle is set
+        if (riskOracle != address(0)) {
+            IRiskOracle(riskOracle).requestRiskAssessment(
+                projectId,
+                msg.sender,
+                documents
+            );
+        }
+
+        return projectId;
+    }
+
+    function updateAIRiskAssessment(
+        uint256 projectId,
+        string calldata riskGrade,
+        uint256 riskScore
+    ) external onlyRole(RISK_ASSESSOR_ROLE) {
+        require(
+            projectId > 0 && projectId <= projectCounter,
+            "Invalid project"
+        );
+        require(bytes(riskGrade).length > 0, "Invalid grade");
+        require(riskScore <= 100, "Invalid score");
+
+        projects[projectId].aiRiskGrade = riskGrade;
+        projects[projectId].aiRiskScore = riskScore;
+    }
+
+    function approveProject(uint256 projectId) external onlyRole(ADMIN_ROLE) {
+        require(
+            projectId > 0 && projectId <= projectCounter,
+            "Invalid project"
+        );
+        require(!projects[projectId].isApproved, "Already approved");
+        require(
+            bytes(projects[projectId].aiRiskGrade).length > 0,
+            "No risk grade"
+        );
+        require(vaultFactory != address(0), "Vault factory not set");
+
+        projects[projectId].isApproved = true;
+
+        emit ProjectApproved(
+            projectId,
+            msg.sender,
+            projects[projectId].aiRiskGrade,
+            block.timestamp
+        );
+    }
+
+    function rejectProject(
+        uint256 projectId,
+        string calldata reason
+    ) external onlyRole(ADMIN_ROLE) {
+        require(
+            projectId > 0 && projectId <= projectCounter,
+            "Invalid project"
+        );
+        require(!projects[projectId].isApproved, "Already approved");
+
+        emit ProjectRejected(projectId, reason, block.timestamp);
+    }
+
+    function registerVault(uint256 projectId, address vaultAddress) external {
+        require(msg.sender == vaultFactory, "Only factory");
+        require(projects[projectId].isApproved, "Project not approved");
+        require(projectToVault[projectId] == address(0), "Vault exists");
+
+        projectToVault[projectId] = vaultAddress;
+
+        emit VaultCreated(
+            projectId,
+            vaultAddress,
+            projects[projectId].developer
+        );
+    }
+
+    // ============================================
+    // View Functions
+    // ============================================
+
+    function isDeveloperApproved(
+        address developer
+    ) external view returns (bool) {
+        return developers[developer].isApproved;
+    }
+
+    function isDeveloperActive(address developer) external view returns (bool) {
+        return developers[developer].isActive;
+    }
+
+    function getDeveloperInfo(
+        address developer
+    ) external view returns (DeveloperInfo memory) {
+        return developers[developer];
+    }
+
+    function getProjectProposal(
+        uint256 projectId
+    ) external view returns (ProjectProposal memory) {
+        require(
+            projectId > 0 && projectId <= projectCounter,
+            "Invalid project"
+        );
+        return projects[projectId];
+    }
+
+    function getTotalProjects() external view returns (uint256) {
+        return projectCounter;
+    }
+
+    function getDeveloperProjects(
+        address developer
+    ) external view returns (uint256[] memory) {
+        return developerProjects[developer];
+    }
+
+    function getVaultAddress(
+        uint256 projectId
+    ) external view returns (address) {
+        return projectToVault[projectId];
+    }
+
+    // ============================================
+    // Protocol Configuration
+    // ============================================
+
+    function setMinInvestment(uint256 amount) external onlyRole(ADMIN_ROLE) {
+        require(amount > 0, "Invalid amount");
+        minInvestment = amount;
+    }
+
+    function setProtocolFee(uint256 bps) external onlyRole(ADMIN_ROLE) {
+        require(bps <= 1000, "Fee too high"); // Max 10%
+        protocolFee = bps;
+    }
+
+    function setVaultFactory(address factory) external onlyRole(ADMIN_ROLE) {
+        require(factory != address(0), "Invalid factory");
+        vaultFactory = factory;
+    }
+
+    function setRiskOracle(address oracle) external onlyRole(ADMIN_ROLE) {
+        require(oracle != address(0), "Invalid oracle");
+        riskOracle = oracle;
+        _grantRole(RISK_ASSESSOR_ROLE, oracle);
+    }
+
+    function setTreasury(address _treasury) external onlyRole(ADMIN_ROLE) {
+        require(_treasury != address(0), "Invalid treasury");
+        treasury = _treasury;
+    }
+
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+
+    // ============================================
+    // Project Statistics Updates
+    // ============================================
+
+    function recordProjectCompletion(address developer) external {
+        require(msg.sender == vaultFactory, "Only factory");
+        developers[developer].totalProjectsCompleted++;
+    }
+
+    function recordProjectDefault(address developer) external {
+        require(msg.sender == vaultFactory, "Only factory");
+        developers[developer].totalDefaulted++;
+    }
+}

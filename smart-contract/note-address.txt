@@ -1,0 +1,21 @@
+Script ran successfully.
+
+== Logs ==
+  Deploying ProtocolRegistry...
+  ProtocolRegistry deployed at: 0x075aCCAd5c1cfF17bC512d28e982CDC1C7B5B033
+  Deploying RiskOracle...
+  RiskOracle deployed at: 0xD01697f403A9F5FC059004f71310008aa275becd
+  Deploying VaultFactory...
+  VaultFactory deployed at: 0x2569105Cb567D5d85B2aE26EB312aAEA05aA904c
+  Configuring protocol...
+  
+=== Deployment Complete ===
+  ProtocolRegistry: 0x075aCCAd5c1cfF17bC512d28e982CDC1C7B5B033
+  RiskOracle: 0xD01697f403A9F5FC059004f71310008aa275becd
+  VaultFactory: 0x2569105Cb567D5d85B2aE26EB312aAEA05aA904c
+  Stablecoin: 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
+  Treasury: 0x48C84BE840D0B024Bf2FCf190313A8bCdb31c6bc
+  Min Investment: 6500000
+  Protocol Fee: 100 bps
+
+## Setting up 1 EVM.

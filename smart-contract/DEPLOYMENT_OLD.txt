@@ -1,0 +1,10 @@
+=== Old Deployment (Had Issues) ===
+Registry: 0x075aCCAd5c1cfF17bC512d28e982CDC1C7B5B033
+Factory: 0x2569105Cb567D5d85B2aE26EB312aAEA05aA904c
+Oracle: 0xD01697f403A9F5FC059004f71310008aa275becd
+Mock USDC: 0x7963702fb430346E7Ec55B99b5abE2bDbC096Ca5
+Vault: 0x0eA22440436cE47f43c79BE57785F960ac7DfeD9
+
+Issues:
+- Vault approval failed (access control)
+- Protocol = Factory (should be Registry)
