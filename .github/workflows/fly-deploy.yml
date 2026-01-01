@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "web/**"
+      - "front-end/**"
       - ".github/workflows/fly-web.yml"
 
 jobs:
