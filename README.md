@@ -1,7 +1,7 @@
 # FOUNDRA - Real Estate On Chain Construction Financing
 
 ## Overview
-Decentralized lending protocol untuk pembiayaan konstruksi real estate di Indonesia. Protocol ini menghubungkan developer properti dengan investor melalui tokenized lending pools dengan compliance built-in.
+FOUNDRA bypasses traditional banking hurdles. We provide construction financing based on project viability, market demand, and AI-driven cash flow analysis. No more stalled projects—just on-chain efficiency.
 
 ## Key Features
 - 🏗️ Construction financing for project owner property
