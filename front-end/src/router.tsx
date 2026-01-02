@@ -85,7 +85,7 @@ export const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "vaults/:txhash",
+        path: "vaults/:address",
         element: <VaultDetailPage />,
       },
       {

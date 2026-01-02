@@ -17,7 +17,7 @@ export default function Developer(): ReactNode {
             Scale your Real Estate projects with <span className="text-emerald-500">Global Liquidity.</span>
           </h1>
           <p className="text-sm md:text-base text-slate-400 max-w-3xl font-medium leading-relaxed">
-            RWA Lending AI bypasses traditional banking hurdles. We provide construction 
+            FOUNDRA bypasses traditional banking hurdles. We provide construction 
             financing based on project viability, market demand, and AI-driven cash flow analysis. 
             No more stalled projects—just on-chain efficiency.
           </p>

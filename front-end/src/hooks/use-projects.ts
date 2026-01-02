@@ -22,6 +22,7 @@ export function useProjects() {
           onchain_id,
           tx_hash,
           created_at,
+          ai_risk_audit,
           project_owners!inner (
             id,
             user_auths!inner (
