@@ -17,7 +17,7 @@ export default function Login(): ReactNode {
   const [loadingRole, setLoadingRole] = useState<"investor" | "developer" | null>(null);
 
   const redirectUser = useCallback((role: string) => {
-    const targetPath = role === "project-owner" ? "/app/developer/register" : "/app/investor/verification";
+    const targetPath = role === "project-owner" ? "/app/developer/verification" : "/app/investor/verification";
     navigate(targetPath);
   }, [navigate]);
 
