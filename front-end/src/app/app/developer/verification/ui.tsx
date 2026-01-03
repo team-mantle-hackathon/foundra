@@ -100,7 +100,7 @@ export default function VerificationDeveloper(): ReactNode {
       setStatusMsg("Verification Success!");
       setReclaimUrl(null);
       
-      navigate('/app/developer');
+      navigate('/app/developer/register');
     },
     onError: (error: any) => {
       setStatusMsg(`Error: ${error.message || "Unexpected Error"}`);

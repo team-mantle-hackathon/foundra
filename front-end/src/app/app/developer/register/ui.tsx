@@ -87,7 +87,7 @@ export default function RegisterDeveloper(): ReactNode {
     console.log("File ready to upload:", file.name);
     
     registerOrg(payload, {
-      onSuccess: () => navigate("/app/developer/verification"),
+      onSuccess: () => navigate("/app/developer"),
       onError: (err) => {
         setErrorMessage(err.message || "Something went wrong on-chain or database.");
         setIsErrorOpen(true);

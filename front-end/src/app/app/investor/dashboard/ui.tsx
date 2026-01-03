@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	ArrowUpRight,
 	Clock,
@@ -33,6 +34,8 @@ export default function InvestorDashboard(): ReactNode {
   const { mutate: deposit, isPending: isPendingDeposit } = useDeposit();
   
   const { mutate: redeem, isPending: isPendingRedeem } = useRedeem();
+  
+  const queryClient = useQueryClient();
 
 	const [selectedPool, setSelectedPool] = useState<any>(null);
 	const [openInvest, setOpenInvest] = useState(false);
@@ -69,13 +72,14 @@ export default function InvestorDashboard(): ReactNode {
 	}
 	
 	const onRedeem = (payload: any): void => {
-	console.log(payload)
 	  redeem({
 			vaultId: payload.id,
 			vaultAddress: payload.address_vault,
 			shares: payload.shares
 		}, {
       onSuccess: () => {
+        queryClient.invalidateQueries({queryKey: ['list-pools']});
+        queryClient.invalidateQueries({queryKey: ['investor-holdings']});
         setIsSuccess(true)
       },
       onError: (error) => {
@@ -278,6 +282,26 @@ export default function InvestorDashboard(): ReactNode {
 										</div>
 									</div>
 								</div>
+								
+								<div className="space-y-2">
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+                    <span>Funding Progress</span>
+                    <span className="text-slate-300">
+                      {formatUSDC(p.funds)} / {formatUSDC(p.target_funds)}
+                    </span>
+                  </div>
+                
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full bg-emerald-500"
+                      style={{ width: `${p.progressPct}%` }}
+                    />
+                  </div>
+                
+                  <p className="text-[10px] text-slate-500">
+                    {p.progressPct}% funded
+                  </p>
+                </div>
 
 								<div className="grid grid-cols-2 gap-2">
 								<Link to={`/app/investor/vault/${p.address_vault}`}>

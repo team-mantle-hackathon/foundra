@@ -1,14 +1,9 @@
-import { MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { Button } from "@/components/ui/button";
 import { VaultCard } from "@/components/vault-card";
 import { useListVaultGuest } from "@/hooks/use-list-vault-guest";
-import { POOLS } from "../data/pools/warehouse"; // Import data yang baru dibuat di atas
 
 export default function Vault(): ReactNode {
-  const navigate = useNavigate();
-  
   const { data: vaults, isLoading } = useListVaultGuest(); // all
   const [q, setQ] = useState("");
   

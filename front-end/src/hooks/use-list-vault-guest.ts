@@ -20,13 +20,13 @@ type FeaturedVault = {
 
 const toNum = (x: unknown) => Number(x ?? 0);
 
-export function useListVaultGuest(limit = 3) {
+export function useListVaultGuest(limit?: number) {
   return useQuery({
-    queryKey: ["featured-vaults", limit],
+    queryKey: ["featured-vaults", limit ?? 'all'],
     staleTime: 10_000,
     refetchInterval: 20_000,
     queryFn: async (): Promise<FeaturedVault[]> => {
-      const { data, error } = await supabase
+      let queryVault = supabase
         .from("vaults")
         .select(
           `
@@ -49,8 +49,10 @@ export function useListVaultGuest(limit = 3) {
         .is("deleted_at", null)
         .in("status", [...ACTIVE_VAULT_STATUSES])
         .order("created_at", { ascending: false })
-        .limit(limit);
 
+      if (typeof limit === "number") queryVault = queryVault.limit(limit);
+      
+      const { data, error } = await queryVault;
       if (error) throw error;
 
       const rows = (data ?? []) as any[];

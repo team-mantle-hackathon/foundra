@@ -12,6 +12,8 @@ export function useListPools() {
           status,
           tenor,
           address_vault,
+          funds,
+          target_funds,
           projects (
             name,
             location,
@@ -29,6 +31,13 @@ export function useListPools() {
           ? v.projects[0]
           : v.projects;
         
+        const funds = BigInt(v.funds ?? 0);
+        const target_funds = BigInt(v.target_funds ?? 0);
+
+        const progressBps =
+          target_funds === 0n ? 0 : Number((funds * 10_000n) / target_funds); // 0..10000
+        const progressPct = Math.min(100, Math.floor(progressBps / 100)); // 0..100
+        
         return {
           id: v.id,
           name: project.name,
@@ -36,6 +45,9 @@ export function useListPools() {
           location: project.location,
           apy: `${project.target_apy}%`,
           tenor: `${v.tenor} Months`,
+          funds,
+          target_funds,
+          progressPct,
           risk: `${project.ai_risk_grade} ${project.ai_risk_score}`,
           status_vault: v.status
         }
