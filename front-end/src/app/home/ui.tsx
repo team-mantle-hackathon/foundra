@@ -2,8 +2,16 @@ import { Activity, ArrowRight, BrainCircuit, Globe, LineChart, ShieldCheck } fro
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { VaultCard } from "@/components/vault-card";
+import { useListVaultGuest } from "@/hooks/use-list-vault-guest";
+import { useSummaryResult } from "@/hooks/use-summary-result";
+import { formatUSDC } from "@/lib/utils";
 
 export default function Home(): ReactNode {
+  
+  const { data: summaryResult, isLoading: isLoadingSummary } = useSummaryResult();
+  const { data: listVaultGuest, isLoading: isLoadingListVaultGuest } = useListVaultGuest(3);
+  
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 selection:bg-emerald-500/30 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 pt-28 pb-20 space-y-24">
@@ -57,17 +65,38 @@ export default function Home(): ReactNode {
               
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Total Funded</p>
-                <p className="text-4xl font-mono font-bold text-white tracking-tighter">125,400.00 <span className="text-lg text-slate-500">USDC</span></p>
+                {isLoadingSummary ? (
+                  <div className="h-10 w-64 rounded-lg bg-slate-800/60 animate-pulse" />
+                ) : (
+                  <p className="text-4xl font-mono font-bold text-white tracking-tighter">
+                    {summaryResult ? formatUSDC(summaryResult.totalFundedRaw) : "0 USDC"}
+                  </p>
+                )}
+
               </div>
 
               <div className="grid grid-cols-2 gap-6 pt-4 border-t border-slate-800">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase text-slate-500 font-bold">Active Vaults</p>
-                  <p className="text-xl font-mono font-bold text-emerald-400 text-white">03</p>
+                  
+                  {isLoadingSummary ? (
+                    <div className="h-6 w-10 rounded bg-slate-800/60 animate-pulse" />
+                  ) : (
+                    <p className="text-xl font-mono font-bold text-emerald-400 text-white">
+                      {String(summaryResult?.activeVaults ?? 0).padStart(2, "0")}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase text-slate-500 font-bold">Avg. Target APY</p>
-                  <p className="text-xl font-mono font-bold text-cyan-400 uppercase tracking-tighter font-bold">12%</p>
+                  
+                  {isLoadingSummary ? (
+                    <div className="h-6 w-14 rounded bg-slate-800/60 animate-pulse" />
+                  ) : (
+                    <p className="text-xl font-mono font-bold text-cyan-400 uppercase tracking-tighter">
+                      {`${Number(summaryResult?.avgTargetApy ?? 0).toFixed(1)}%`}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -110,36 +139,31 @@ export default function Home(): ReactNode {
             </Link>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              { name: "Cluster Harmoni BSD Phase 2", apy: "12.0%", tenor: "14 Months", risk: "A", location: "Tangerang Selatan" },
-              { name: "Green Valley Residence", apy: "11.2%", tenor: "12 Months", risk: "B", location: "Bandung" },
-              { name: "Sunrise Hills @Bali", apy: "13.8%", tenor: "16 Months", risk: "B", location: "Badung, Bali" }
-            ].map((v) => (
-              <div key={v.name} className="group rounded-2xl border border-slate-800 bg-slate-900/20 p-6 space-y-6 hover:border-slate-700 transition-all">
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight">{v.name}</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tighter">{v.location}</p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {isLoadingListVaultGuest ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 animate-pulse">
+                  <div className="h-4 w-16 bg-slate-800/70 rounded ml-auto" />
+                  <div className="mt-4 h-5 w-3/4 bg-slate-800/70 rounded" />
+                  <div className="mt-3 h-3 w-1/2 bg-slate-800/70 rounded" />
+                  <div className="mt-6 h-16 bg-slate-800/50 rounded" />
+                  <div className="mt-6 h-10 bg-slate-800/70 rounded" />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 border-y border-slate-800/50 py-4">
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-500 mb-1 leading-none">Target APY</p>
-                    <p className="text-lg font-mono font-bold text-emerald-400">{v.apy}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-slate-500 mb-1 leading-none text-right">Risk Grade</p>
-                    <span className="text-xs font-mono font-bold text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded bg-emerald-500/5">Grade {v.risk}</span>
-                  </div>
-                </div>
-
-                <Link to="/vaults/0x123123123" className="block">
-                  <Button variant="outline" className="w-full border-slate-800 bg-slate-900 hover:bg-emerald-500 hover:text-slate-950 font-black text-[10px] uppercase tracking-widest h-11 transition-all">
-                    View Pool Details
-                  </Button>
-                </Link>
-              </div>
-            ))}
+              ))
+            ) : (
+              (listVaultGuest ?? []).map((v) => (
+                <VaultCard
+                  key={v.id}
+                  address={v.address_vault}
+                  name={v.project.name}
+                  location={v.project.location}
+                  apy={v.project.target_apy}
+                  risk={v.project.ai_risk_grade}
+                  fundsRaw={v.funds}
+                  targetRaw={v.target_funds}
+                />
+              ))
+            )}
           </div>
         </section>
       </div>

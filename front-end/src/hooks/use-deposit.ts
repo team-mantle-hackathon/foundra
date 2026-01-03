@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { readContract, simulateContract, waitForTransactionReceipt } from "@wagmi/core"; 
+import { simulateContract, waitForTransactionReceipt } from "@wagmi/core"; 
 import { parseEventLogs } from "viem";
 import {
 	useAccount,
@@ -96,6 +96,26 @@ export function useDeposit() {
       );
       
       if (errorIncrement) throw errorIncrement;
+      
+      const { data: v, error: vErr } = await supabase
+        .from("vaults")
+        .select("funds, target_funds, status")
+        .eq("id", vaultId)
+        .single();
+      
+      if (vErr) throw vErr;
+      
+      const fundsNow = BigInt(v.funds); 
+      const target = BigInt(v.target_funds);
+      
+      if (fundsNow >= target && v.status !== "Active") {
+        const { error: upErr } = await supabase
+          .from("vaults")
+          .update({ status: "ACTIVE" })
+          .eq("id", vaultId);
+      
+        if (upErr) throw upErr;
+      }
 
 			return {
 				txHash: receipt.transactionHash,

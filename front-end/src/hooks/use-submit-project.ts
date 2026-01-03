@@ -133,6 +133,7 @@ export function useSubmitProject(setProgress?: (v: string) => void) {
         target:BigInt(Math.floor(payload.target * 1_000_000)).toString(),
         ai_risk_grade: ai.riskGrade,
         ai_risk_score: ai.riskScore,
+        ai_risk_audit: ai,
         onchain_id: onchainId,
         project_owner_id: owner.id,
         ipfs_documents: cid,

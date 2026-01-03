@@ -60,6 +60,8 @@ export default function DeveloperDashboard(): ReactNode {
   const [progress, setProgress]         = useState<string | null>(null);
   const [repayOpen, setRepayOpen]       = useState<boolean>(false);
   const [selectedPool, setSelectedPool] = useState<any>({})
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [selectedAudit, setSelectedAudit] = useState<any>(null);
 	
   const { mutate, isPending } = useSubmitProject(setProgress);
   const { data: projects, isLoading } = useProjects();
@@ -193,7 +195,7 @@ export default function DeveloperDashboard(): ReactNode {
   									<Textarea
   										id="description"
   										{...register("description")}
-  										placeholder="e.g. Indonesia, Samarinda"
+  										placeholder="e.g. Housing with Cluster and underground cable. Build like a mansion"
   										className="bg-slate-950 border-slate-800 text-sm focus:ring-emerald-500/50"
   									/>
                     {errors.description && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.description.message}</p>}
@@ -414,22 +416,26 @@ export default function DeveloperDashboard(): ReactNode {
                             Repay
                           </Button> : ''
                           }
-                        {p.status === "Rejected" ? (
+                          
                           <Button
                             size="sm"
-                            className="bg-red-500/10 text-red-400 border border-red-500/50 h-7 px-4 hover:bg-red-500 hover:text-white"
-                            onClick={() => setIsOpen(true)}
+                            className="cursor-pointer bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 h-7 px-3 hover:bg-emerald-500 hover:text-slate-950"
+                            disabled={!p.ai_risk_audit}
+                            onClick={() => {
+                              setSelectedAudit(p.ai_risk_audit);
+                              setAuditOpen(true);
+                            }}
                           >
-                            Update Docs
+                            AI Audit
                           </Button>
-                        ) : (
+
                           <Button
                             size="sm"
                             className=" cursor-pointer text-white bg-slate-800 hover:bg-slate-900"
                             onClick={() => {
                               if (p.vaults?.[0]?.address_vault) {
                                 window.open(
-                                  `https://sepolia.etherscan.io/address/${p.vaults?.[0]?.address_vault}`,
+                                  `https://sepolia.mantlescan.xyz/address/${p.vaults?.[0]?.address_vault}`,
                                   "_blank"
                                 )
                               } else {
@@ -440,7 +446,6 @@ export default function DeveloperDashboard(): ReactNode {
                           >
                             Explorer <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
                           </Button>
-                        )}
                         </div>
                       </td>
                     </tr>
@@ -464,6 +469,95 @@ export default function DeveloperDashboard(): ReactNode {
 					})
 				}}
 			/>
+			<Dialog open={auditOpen} onOpenChange={setAuditOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-slate-900 border-slate-800 text-slate-50">
+          <DialogHeader>
+            <DialogTitle className="text-lg">AI Risk Audit (Internal)</DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs">
+              Result of AI analyze to your documents.
+            </DialogDescription>
+          </DialogHeader>
+      
+          {!selectedAudit ? (
+            <div className="text-sm text-slate-400">
+              No AI Audit yet.
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+              {/* Summary */}
+              <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Summary</p>
+                  <span className="text-[10px] font-black px-2 py-1 rounded border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                    Grade {selectedAudit.riskGrade} • {selectedAudit.riskScore}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-200 leading-relaxed">
+                  {selectedAudit.summary ?? "-"}
+                </p>
+              </div>
+      
+              {/* Dimension scores */}
+              {selectedAudit.dimensionScores && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {Object.entries(selectedAudit.dimensionScores).map(([k, v]) => (
+                    <div key={k} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                      <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold wrap-break-word">{k}</p>
+                      <p className="text-lg font-mono font-black text-white">{String(v)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+      
+              {/* Key risks */}
+              {!!selectedAudit.keyRisks?.length && (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Key Risks</p>
+                  <ul className="space-y-2 text-sm text-slate-200 list-disc pl-5">
+                    {selectedAudit.keyRisks.map((x: string, i: number) => (
+                      <li key={i}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+      
+              {/* Missing docs */}
+              {!!selectedAudit.missingDocs?.length && (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Missing Docs</p>
+                  <ul className="space-y-2 text-sm text-slate-200 list-disc pl-5">
+                    {selectedAudit.missingDocs.map((x: string, i: number) => (
+                      <li key={i}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+      
+              {/* Developer notes */}
+              {!!selectedAudit.developerNotes?.length && (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Action Items</p>
+                  <ul className="space-y-2 text-sm text-slate-200 list-disc pl-5">
+                    {selectedAudit.developerNotes.map((x: string, i: number) => (
+                      <li key={i}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+      
+          <DialogFooter>
+            <Button
+              className="bg-slate-800 hover:bg-slate-900 text-white"
+              onClick={() => setAuditOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 			<SuccessDialog 
 	      title="Success Submit Project"
 				message={successMessage}
