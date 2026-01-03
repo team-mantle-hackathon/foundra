@@ -2,6 +2,7 @@ import { ReclaimProofRequest } from "@reclaimprotocol/js-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { AlertCircle, Check, CheckCircle2, Github, Loader2, ShieldCheck } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { useNavigate } from "react-router";
 import { useAccount, useWriteContract } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { supabase } from "@/lib/supabase";
 export default function VerificationInvestor(): ReactNode {
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  
+  const navigate = useNavigate();
 
   const [statusMsg, setStatusMsg] = useState("");
   const [reclaimUrl, setReclaimUrl] = useState<string | null>(null);
@@ -97,6 +100,8 @@ export default function VerificationInvestor(): ReactNode {
     onSuccess: () => {
       setStatusMsg("Verification Success!");
       setReclaimUrl(null);
+      
+      navigate('/app/investor');
     },
     onError: (error: any) => {
       setStatusMsg(`Error: ${error.message || "Unexpected Error"}`);
