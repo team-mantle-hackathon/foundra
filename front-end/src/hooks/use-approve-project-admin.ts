@@ -1,10 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { readContract, simulateContract, waitForTransactionReceipt } from "@wagmi/core";
+import {
+  readContract,
+  simulateContract,
+  waitForTransactionReceipt,
+} from "@wagmi/core";
 import { useAccount, useConfig, useWriteContract } from "wagmi";
 import { protocolAbi } from "@/constants/abi/abi-protocol-registry";
 import { supabase } from "@/lib/supabase";
 
-export function useApproveProjectAdmin() {
+type ProgressFn = (s: string | null) => void;
+
+export function useApproveProjectAdmin(setProgress?: ProgressFn) {
   const { writeContractAsync } = useWriteContract();
   const { address } = useAccount();
   const config = useConfig();
@@ -17,23 +23,24 @@ export function useApproveProjectAdmin() {
       estimated_durations: number;
       onchain_id: number;
     }) => {
-      
-      const {request} = await simulateContract(config, {
-        address: import.meta.env
-          .VITE_PROTOCOL_REGISTRY_ADDRESS as `0x${string}`,
+      setProgress?.("Simulating tx (pre-check)...");
+      const { request } = await simulateContract(config, {
+        address: import.meta.env.VITE_PROTOCOL_REGISTRY_ADDRESS as `0x${string}`,
         abi: protocolAbi,
         functionName: "approveProject",
         args: [BigInt(project.onchain_id)],
-        account: address
-      })
-      
+        account: address,
+      });
+
+      setProgress?.("Waiting wallet confirmation...");
       const hash = await writeContractAsync(request);
 
+      setProgress?.("Transaction sent. Waiting confirmation...");
       await waitForTransactionReceipt(config, { hash });
 
+      setProgress?.("Reading vault address from registry...");
       const vaultAddress = await readContract(config, {
-        address: import.meta.env
-          .VITE_PROTOCOL_REGISTRY_ADDRESS as `0x${string}`,
+        address: import.meta.env.VITE_PROTOCOL_REGISTRY_ADDRESS as `0x${string}`,
         abi: protocolAbi,
         functionName: "getVaultAddress",
         args: [BigInt(project.onchain_id)],
@@ -46,17 +53,17 @@ export function useApproveProjectAdmin() {
         throw new Error("Vault address not created");
       }
 
+      setProgress?.("Updating project status (DB)...");
       const { error: projErr } = await supabase
         .from("projects")
-        .update({
-          status: "ACTIVE",
-        })
+        .update({ status: "ACTIVE" })
         .eq("id", project.id);
 
       if (projErr) throw projErr;
-      
+
       const tenorMonths = project.estimated_durations * 12;
 
+      setProgress?.("Creating vault record (DB)...");
       const { error: vaultErr } = await supabase.from("vaults").insert({
         project_id: project.id,
         target_funds: project.target,
@@ -70,6 +77,7 @@ export function useApproveProjectAdmin() {
 
       if (vaultErr) throw vaultErr;
 
+      setProgress?.("Done.");
       return { hash, vaultAddress };
     },
     onSuccess: () => {

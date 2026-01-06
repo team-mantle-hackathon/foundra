@@ -2,9 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 import { simulateContract, waitForTransactionReceipt } from "@wagmi/core";
 import { parseEventLogs } from "viem";
 import { useAccount, useConfig, useWriteContract } from "wagmi";
+import { abiERC20 } from "@/constants/abi/abi-erc20";
 import { vaultAbi } from "@/constants/abi/abi-rwa-vault";
 import { supabase } from "@/lib/supabase";
-import { abiERC20 } from "@/constants/abi/abi-erc20";
 
 interface RepayParams {
   id: string;
@@ -83,6 +83,39 @@ export function useRepay() {
       }
 
       const repaymentEvent = logs[0].args;
+      
+      const { data: vaultRow, error: vaultErr } = await supabase
+        .from("vaults")
+        .select("total_owed,status")
+        .eq("id", id)
+        .single();
+
+      if (vaultErr || !vaultRow) throw new Error("Vault not found");
+
+      const totalOwed = BigInt(vaultRow.total_owed ?? 0);
+
+      const { data: repayRows, error: repayErr } = await supabase
+        .from("vault_repayments")
+        .select("amount")
+        .eq("vault_id", id);
+
+      if (repayErr) throw repayErr;
+
+      const totalRepaid = (repayRows ?? []).reduce((acc, r) => {
+        return acc + BigInt(r.amount);
+      }, 0n);
+
+      const nextStatus = totalRepaid >= totalOwed ? "COMPLETED" : "REPAYING";
+
+      const { error: updErr } = await supabase
+        .from("vaults")
+        .update({
+          status: nextStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (updErr) throw updErr;
 
       const { error } = await supabase.from("vault_repayments").insert({
         vault_id: id,
@@ -95,6 +128,8 @@ export function useRepay() {
 
       return {
         txHash: hash,
+        totalRepaid,
+        totalOwed,
         amount: repaymentEvent.amount,
       };
     },

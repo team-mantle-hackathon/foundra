@@ -83,6 +83,7 @@ export function useDeposit() {
 				funds: assets.toString(),
 				token_shares: shares.toString(),
 				tx_hash: receipt.transactionHash,
+				status_invest: "ACTIVE"
 			});
 
 			if (error) throw error;

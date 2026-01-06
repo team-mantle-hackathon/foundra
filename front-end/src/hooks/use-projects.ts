@@ -39,7 +39,7 @@ export function useProjects() {
             address_vault,
             tx_hash,
             total_owed,
-            
+            due_repayment,
             vault_repayment_summary (
               total_repaid
             )

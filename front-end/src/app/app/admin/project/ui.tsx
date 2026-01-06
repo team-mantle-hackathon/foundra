@@ -7,8 +7,11 @@ import {
   ShieldCheck, 
   Wallet, 
   XCircle,} from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useAccount } from "wagmi";
+import { ErrorDialog } from "@/components/error-dialog";
+import { ProgressDialog } from "@/components/process-dialog";
+import { SuccessDialog } from "@/components/success-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,12 +25,26 @@ import { useDisburseFunds } from "@/hooks/use-disburse-funds";
 import { useProjectsAdmin } from "@/hooks/use-projects-admin";
 import { useRejectProjectAdmin } from "@/hooks/use-reject-project-admin";
 import { formatUSDC, ipfsToHttp } from "@/lib/utils";
+import { RejectReasonDialog } from "./components/reject-reason-dialog";
 
 export default function AdminProject(): ReactNode {
+  const [progressOpen, setProgressOpen] = useState(false);
+  const [progressText, setProgressText] = useState<string | null>(null);
+  const [progressTitle, setProgressTitle] = useState<string>("Processing...");
+  const [txHash, setTxHash] = useState<string | null>(null);
+  
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  
 	const { data: projects, isLoading } = useProjectsAdmin();
-  const { mutate: approvalProject, isPending } = useApproveProjectAdmin();
-  const { mutate: rejectedProject, isPending: isPendingReject } = useRejectProjectAdmin();
-  const { mutate: disburseFunds, isPending: isPendingDisburseFunds } = useDisburseFunds();
+  const { mutate: approvalProject, isPending } = useApproveProjectAdmin(setProgressText);
+  const { mutate: rejectedProject, isPending: isPendingReject } = useRejectProjectAdmin(setProgressText);
+  const { mutate: disburseFunds, isPending: isPendingDisburseFunds } = useDisburseFunds(setProgressText);
 
 	const getStatusStyle = (status: string) => {
 		switch (status) {
@@ -42,40 +59,77 @@ export default function AdminProject(): ReactNode {
 		}
 	};
 	
+	const openProgress = (title: string) => {
+    setProgressTitle(title);
+    setProgressText("Preparing...");
+    setTxHash(null);
+    setProgressOpen(true);
+  };
+  
+  const closeProgress = () => {
+    setProgressOpen(false);
+    setProgressText(null);
+  };
+	
   const approveProject = (payload: {
     id: string;
     target: number;
     estimated_durations: number;
     onchain_id: number;
   }) => {
+    openProgress("Approving Project");
+    console.log(payload)
     approvalProject(payload, {
       onSuccess:(success) => {
-        alert('Sukses Approve');
+        setTxHash(success.hash);
+        closeProgress();
+        setSuccessMessage("Sukses approve project");
+        setIsSuccess(true);
       },
       onError: (error) => {
-        console.log(error)
+        closeProgress();
+        setErrorMessage(error?.message ?? "Approve failed");
+        setIsError(true);
       }
     })
 	}
   
-  const rejectProject = (payload: { id: string; onchain_id: number; reason: string; }): void => {
-    rejectedProject(payload, {
+  const rejectProject = (reason: string): void => {
+    
+    if (!selectedProject) return;
+    setRejectOpen(false);
+  
+    openProgress("Rejecting Project");
+    
+    rejectedProject({ id: selectedProject.id, onchain_id: selectedProject.onchain_id, reason }, {
       onSuccess: (success) => {
-        alert('Sukses Reject');
+        setTxHash(success.hash);
+        closeProgress();
+        setSuccessMessage("Success reject project");
+        setIsSuccess(true);
       },
       onError: (error) => {
-        console.log(error)
+        closeProgress();
+        setErrorMessage(error?.message ?? "Reject failed");
+        setIsError(true);
       }
     });
   }
   
-  const onDisburse = (payload: any): void => {
-    disburseFunds(payload, {
+  const onDisburse = (vaultId: string, vaultAddress: `0x${string}`): void => {
+    openProgress("Disbursing Funds");
+    
+    disburseFunds( { vaultId, vaultAddress }, {
       onSuccess: (success) => {
-        alert('Sukses Disburse');
+        setTxHash(success);
+        closeProgress();
+        setSuccessMessage("Success disburse funds");
+        setIsSuccess(true);
       },
       onError: (error) => {
-        console.log(error)
+        closeProgress();
+        setErrorMessage(error?.message ?? "Disburse failed");
+        setIsError(true);
       }
     });
   }
@@ -120,7 +174,7 @@ export default function AdminProject(): ReactNode {
 							{isLoading && (
 								<tr>
 									<td
-										colSpan={6}
+										colSpan={10}
 										className="px-6 py-10 text-center text-slate-500"
 									>
 										Loading projects…
@@ -129,7 +183,7 @@ export default function AdminProject(): ReactNode {
 							)}
 
 							{projects?.map((p, key) => (
-								<tr key={p.id} className="hover:bg-white/[0.02]">
+								<tr key={p.id} className="hover:bg-white/2">
                   <td className="px-6 py-4">{key+1}</td>
 									<td className="px-6 py-4 font-medium">{p.name}</td>
 
@@ -250,11 +304,8 @@ export default function AdminProject(): ReactNode {
                           <DropdownMenuItem
                             className="text-red-400 focus:text-red-400"
                             onClick={() => {
-                              rejectProject({
-                                id: p.id,
-                                onchain_id: p.onchain_id,
-                                reason: 'Tidak Ada Target APY!'
-                              })
+                              setSelectedProject(p);
+                              setRejectOpen(true);
                             }}
                           >
                             <XCircle className="w-4 h-4 mr-2" />
@@ -268,12 +319,7 @@ export default function AdminProject(): ReactNode {
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => {
-                                onDisburse({
-                                  vaultId: p.vaults[0].id,
-                                  vaultAddress: p.vaults[0].address_vault
-                                })
-                              }}
+                              onClick={() => onDisburse(p.vaults[0].id, p.vaults[0].address_vault)}
                             >
                               <BanknoteArrowDown className="w-4 h-4 mr-2" />
                               {isPendingDisburseFunds ? 'Loading...' : 'Disburse Funds'}
@@ -291,6 +337,37 @@ export default function AdminProject(): ReactNode {
 					</table>
 				</div>
 			</div>
+			<ProgressDialog
+        open={progressOpen}
+        onOpenChange={setProgressOpen}
+        title={progressTitle}
+        description="Don't close this dialog until finish!"
+        progress={progressText}
+        txHash={txHash}
+        explorerTxUrl={txHash ? `https://sepolia.mantlescan.xyz/tx/${txHash}` : null}
+        canClose={!(isPending || isPendingReject || isPendingDisburseFunds)}
+      />
+      
+      <RejectReasonDialog
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        disabled={isPendingReject}
+        onConfirm={rejectProject}
+      />
+      
+      <SuccessDialog
+        title="Success"
+        message={successMessage}
+        open={isSuccess}
+        onOpenChange={setIsSuccess}
+      />
+      
+      <ErrorDialog
+        title="Error"
+        error={errorMessage}
+        open={isError}
+        onOpenChange={setIsError}
+      />
 		</main>
 	);
 }

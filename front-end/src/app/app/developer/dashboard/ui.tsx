@@ -43,12 +43,7 @@ const projectSchema = z.object({
 	land_certificate: z.instanceof(File, { message: "Land certificate is required" }),
 	building_permit: z.instanceof(File, { message: "Building permit is required" }),
 	site_plan: z.instanceof(File, { message: "Site plan is required" }),
-	budget_plan: z.instanceof(File, { message: "Budget plan is required" }),
-	target_apy: z
-  .coerce
-  .number("Target APY is required")
-  .min(0.1, "Target APY must be at least 0.1%")
-  .max(30, "Target APY too high for real estate projects")
+	budget_plan: z.instanceof(File, { message: "Budget plan is required" })
 });
 
 export default function DeveloperDashboard(): ReactNode {
@@ -74,8 +69,7 @@ export default function DeveloperDashboard(): ReactNode {
       location: "",
       estimated_budget: 0,
       target: 0,
-      estimated_durations: 0,
-      target_apy: 0
+      estimated_durations: 0
     }
 	});
 	
@@ -88,6 +82,29 @@ export default function DeveloperDashboard(): ReactNode {
     const funds = p.vaults?.[0]?.outstanding ?? 0;
     return acc + BigInt(funds);
   }, 0n) ?? 0n;
+	
+	const nextDeadline = (() => {
+    const repayVaults =
+      projects
+        ?.flatMap((p) =>
+          (p.vaults ?? []).map((v: any) => ({
+            projectName: p.name,
+            due: v.due_repayment, // DATE string "YYYY-MM-DD" dari DB
+            status: v.status,
+            outstanding: v.outstanding ?? 0n,
+          }))
+        )
+        .filter((x) => x.status === "REPAYING" && x.outstanding > 0n && !!x.due) ?? [];
+  
+    if (repayVaults.length === 0) return null;
+  
+    repayVaults.sort(
+      (a, b) => new Date(a.due).getTime() - new Date(b.due).getTime()
+    );
+  
+    return repayVaults[0];
+  })();
+
 	
 	const onSubmit = (data: any) => {
 	  mutate(data, {
@@ -239,20 +256,6 @@ export default function DeveloperDashboard(): ReactNode {
   									/>
                     {errors.target && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.target.message}</p>}
   								</div>
-          
-  								<div className="grid gap-2">
-   									<Label htmlFor="target_apy" className="text-xs font-semibold text-slate-300">
-    										Target APY (%)
-   									</Label>
-   									<Input
-  										id="target_apy"
-  										{...register("target_apy")}
-  										type="text"
-  										placeholder="10.5"
-  										className="bg-slate-950 border-slate-800 text-sm focus:ring-emerald-500/50"
-   									/>
-                    {errors.target_apy && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.target_apy.message}</p>}
-  								</div>
   								
   								<div className="grid gap-2">
   									<Label htmlFor="estimated_durations" className="text-xs font-semibold text-slate-300">
@@ -319,8 +322,8 @@ export default function DeveloperDashboard(): ReactNode {
 					<SummaryCard
 						icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
 						label="Next Deadline"
-						value="-"
-						sub="Green Valley Residence"
+						value={nextDeadline ? new Date(nextDeadline.due).toLocaleDateString("en-GB") : "-"}
+						sub={nextDeadline ? nextDeadline.projectName : "No active repayment"}
 					/>
 				</section>
 
