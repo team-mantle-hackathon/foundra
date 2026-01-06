@@ -5,6 +5,7 @@ import { vaultAbi } from "@/constants/abi/abi-rwa-vault";
 import { supabase } from "@/lib/supabase";
 
 interface RedeemParams {
+  id: string;
   vaultId: string;
   vaultAddress: `0x${string}`;
   shares: bigint;
@@ -16,7 +17,7 @@ export function useRedeem() {
   const config = useConfig();
 
   return useMutation({
-    mutationFn: async ({ vaultId, vaultAddress, shares }: RedeemParams) => {
+    mutationFn: async ({ id, vaultId, vaultAddress, shares }: RedeemParams) => {
       if (!address) throw new Error("Wallet not connected");
       
       const sharesContract = await readContract(config, {
@@ -58,9 +59,17 @@ export function useRedeem() {
         assets_received: assetsReceived.toString(),
         shares_redeemed: shares.toString(),
         tx_hash: receipt.transactionHash,
+        vault_investor_id: id
       });
       
       if (error) throw new Error(error.message)
+      
+      const { error: upErr } = await supabase
+        .from("vault_investors")
+        .update({ status: "REDEEMED" })
+        .eq("id", id);
+    
+      if (upErr) throw upErr;
 
       return {
         txHash: receipt.transactionHash,

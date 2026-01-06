@@ -26,8 +26,10 @@ export function useInvestorHoldings(walletAddress?: string) {
       const { data, error } = await supabase
         .from("vault_investors")
         .select(`
+          id,
           funds,
           token_shares,
+          status_invest,
           user_auths!inner (
             wallet_address
           ),
@@ -63,6 +65,7 @@ export function useInvestorHoldings(walletAddress?: string) {
           ));
       
         return {
+          row_id: row.id,
           id: row.vaults.id,
           name: row.vaults.projects.name,
           apy: row.vaults.projects.target_apy,
@@ -72,6 +75,7 @@ export function useInvestorHoldings(walletAddress?: string) {
           estReturn: estReturnRaw,    // RAW
           status_vault: row.vaults.status,
           status_project: row.vaults.projects.status,
+          status_invest: row.status_invest
         };
       });
 

@@ -6,6 +6,7 @@ import { useAccount, useConfig, useWriteContract } from "wagmi";
 import { protocolAbi } from "@/constants/abi/abi-protocol-registry";
 import { extractPdfText } from "@/lib/pdfParse";
 import { supabase } from "@/lib/supabase";
+import { apyFromGrade } from "@/lib/utils";
 
 export function useSubmitProject(setProgress?: (v: string) => void) {
   const { writeContractAsync } = useWriteContract();
@@ -65,7 +66,7 @@ export function useSubmitProject(setProgress?: (v: string) => void) {
       );
       if (error) throw new Error(error);
       
-      const apyBps = Math.round(payload.target_apy * 100);
+      const apyBps = Math.round(apyFromGrade(ai.riskGrade) * 100);
       
       setProgress?.("Submitting project on-chain…");
 
@@ -129,6 +130,7 @@ export function useSubmitProject(setProgress?: (v: string) => void) {
 
       const { error: insertErr } = await supabase.from('projects').insert({
         ...cleanData,
+        target_apy: apyFromGrade(ai.riskGrade),
         estimated_budget:BigInt(Math.floor(payload.estimated_budget * 1_000_000)).toString(),
         target:BigInt(Math.floor(payload.target * 1_000_000)).toString(),
         ai_risk_grade: ai.riskGrade,

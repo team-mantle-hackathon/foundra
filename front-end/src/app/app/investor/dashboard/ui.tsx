@@ -73,6 +73,7 @@ export default function InvestorDashboard(): ReactNode {
 	
 	const onRedeem = (payload: any): void => {
 	  redeem({
+			id: payload.row_id,
 			vaultId: payload.id,
 			vaultAddress: payload.address_vault,
 			shares: payload.shares
@@ -203,13 +204,18 @@ export default function InvestorDashboard(): ReactNode {
 										</td>
 										<td className="px-6 py-4">
                       {h.status_vault === "COMPLETED" || h.status_vault === "CANCELLED" ? (
-                        <Button
-                          size="sm"
-                          className="bg-emerald-500 text-slate-950 hover:bg-emerald-700 font-bold cursor-pointer"
-                          onClick={() => onRedeem(h)}
-                        >
-                          Redeem
-                        </Button>
+                          h.status_invest === "REDEEMED" ? (
+                            <span className="text-xs text-slate-400 font-semibold">Redeemed</span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-500 text-slate-950 hover:bg-emerald-700 font-bold cursor-pointer"
+                              disabled={isPendingRedeem}
+                              onClick={() => onRedeem(h)}
+                            >
+                              {isPendingRedeem ? "Redeeming..." : "Redeem"}
+                            </Button>
+                          )
                       ) : (
                         <span className="text-xs text-slate-500">Locked</span>
                       )}
@@ -335,6 +341,7 @@ export default function InvestorDashboard(): ReactNode {
 						name: selectedPool.name,
 						apy: selectedPool.apy,
 						status_vault: selectedPool.status_vault,
+						target_funds: selectedPool.target_funds
 					}}
 					onConfirm={(amount) => {
 						onDeposit({

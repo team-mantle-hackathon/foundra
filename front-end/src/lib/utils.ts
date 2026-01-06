@@ -31,3 +31,19 @@ export function ipfsToHttp(ipfsUrl: string) {
   const cid = ipfsUrl.replace("ipfs://", "");
   return `https://ipfs.io/ipfs/${cid}`;
 }
+
+export function apyFromGrade(grade?: string): number {
+  switch ((grade ?? "").trim().toUpperCase()) {
+    case "A":
+      return 10;
+    case "B":
+      return 12;
+    case "C":
+      return 15;
+    case "D":
+      return 18;
+    default:
+      return 10; // fallback
+  }
+}
+
