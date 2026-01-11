@@ -15,7 +15,7 @@ type ProjectRow = {
   deleted_at: string | null;
 };
 
-const ACTIVE_VAULT_STATUSES = ["FUNDRAISING", "ACTIVE", "REPAYING"] as const;
+const ACTIVE_VAULT_STATUSES = ["FUNDRAISING", "ACTIVE", "REPAYING", "COMPLETED"] as const;
 
 const toNum = (x: unknown) => Number(x ?? 0);
 
