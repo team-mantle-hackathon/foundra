@@ -122,7 +122,7 @@ export default function VerificationInvestor(): ReactNode {
             <ShieldCheck className="w-6 h-6 text-emerald-400" />
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            Project Owner Verification
+            Investor Verification
           </CardTitle>
           <CardDescription className="text-slate-400 text-sm">
             Verifikasi identity via Reclaim Protocol
