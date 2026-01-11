@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ReclaimProofRequest } from "@reclaimprotocol/js-sdk";
-import { BadgeCheck, Building2, CheckCircle2, FileText, Loader2, ShieldCheck, Upload } from "lucide-react";
+import { Activity, BadgeCheck, Building2, CheckCircle2, FileText, Loader2, ShieldCheck, Upload } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -12,8 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRegisterProjectOwner } from "@/hooks/use-register-project-owner";
 
-// 1. DEFINISI SCHEMA VALIDASI
 const formSchema = z.object({
+  name: z.string().min(2, "Name minimal 2 characters"),
+  documentIdentity: z
+      .instanceof(FileList)
+      .refine((file) => !!file, "Document Identity File Required")
+      .refine((file) => file && file[0].size <= 5 * 1024 * 1024, "Maximal file size 5MB")
+      .refine(
+        (file) => file && ["application/pdf", "image/jpeg", "image/png"].includes(file[0].type),
+        "Only PDF or Image"
+      ),
   companyName: z.string().min(3, "Company name minimal 3 characters"),
   regNumber: z.string().min(5, "Registration number not valid"),
   licenseFile: z
@@ -32,7 +40,8 @@ export default function RegisterDeveloper(): ReactNode {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isErrorOpen, setIsErrorOpen] = useState(false);
-  const { mutate: registerOrg, isPending } = useRegisterProjectOwner();
+  const [progress, setProgress] = useState<string | null>(null);
+  const { mutate: registerOrg, isPending } = useRegisterProjectOwner(setProgress);
   
   const {
     register,
@@ -47,34 +56,23 @@ export default function RegisterDeveloper(): ReactNode {
   });
 
   const licenseFileValue = watch("licenseFile");
+  const documentIdentityValue = watch("documentIdentity");
   
-  const onDrop = (e: React.DragEvent) => {
+  const onDrop = (input: any, e: React.DragEvent) => {
     e.preventDefault();
     const files = e.dataTransfer.files;
     if (files?.length) {
-      setValue("licenseFile", files, { shouldValidate: true });
+      setValue(input, files, { shouldValidate: true });
     }
   };
 
-  // const startReclaimVerification = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const reclaimProofRequest = await ReclaimProofRequest.init("APP_ID", "SECRET", "PROVIDER");
-  //     const requestUrl = await reclaimProofRequest.getRequestUrl();
-  //     window.open(requestUrl, "_blank");
-  //     await reclaimProofRequest.startSession({
-  //       onSuccess: () => { setIsVerified(true); setLoading(false); },
-  //       onError: () => setLoading(false)
-  //     });
-  //   } catch (error) { setLoading(false); }
-  // };
-  // 
-
   const onSubmit = async (data: FormData) => {
     const file = data.licenseFile?.[0];
+    const documentIdentity = data.documentIdentity?.[0];
     
     const payload: any = {
       ...data,
+      documentIdentity,
       file
     }
     
@@ -107,6 +105,40 @@ export default function RegisterDeveloper(): ReactNode {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-black text-slate-500">Name</Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-3 w-4 h-4 text-slate-600" />
+                  <Input 
+                    {...register("name")}
+                    placeholder="e.g. Jhon Doe" 
+                    className={`bg-slate-950 border-slate-800 pl-10 text-white focus:border-emerald-500 ${errors.name ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {errors.name && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.name.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-black text-slate-500">Document Identity</Label>
+                <div className="relative group">
+                  <div 
+                    onDragOver={(e) => e.preventDefault()} 
+                    onDrop={(e) => onDrop('documentIdentity', e)} 
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${documentIdentityValue && documentIdentityValue.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {documentIdentityValue && documentIdentityValue.length > 0 ? <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" /> : 
+                        <Upload className="w-8 h-8 text-slate-600 mb-2 group-hover:text-slate-400" />}
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                        {documentIdentityValue && documentIdentityValue.length > 0 ? (documentIdentityValue as unknown as FileList)?.[0]?.name : "Upload File"}
+                      </p>
+                    </div>
+                    <input type="file" className="hidden" {...register('documentIdentity')} />
+                  </div>
+                  {errors.documentIdentity && (
+                    <p className="text-[10px] text-red-500 font-bold uppercase pt-2">{errors.documentIdentity.message as string}</p>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-widest font-black text-slate-500">Company Name</Label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-3 w-4 h-4 text-slate-600" />
@@ -137,7 +169,7 @@ export default function RegisterDeveloper(): ReactNode {
                 <div className="relative group">
                   <div 
                     onDragOver={(e) => e.preventDefault()} 
-                    onDrop={onDrop} 
+                    onDrop={(e) => onDrop('licenseFile', e)} 
                     className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${licenseFileValue && licenseFileValue.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}
                   >
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -155,20 +187,12 @@ export default function RegisterDeveloper(): ReactNode {
                 </div>
               </div>
             </div>
-
-            {/*<div className={`p-6 rounded-2xl border transition-all ${isVerified ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 bg-slate-950/50'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-black uppercase tracking-tight text-white flex items-center gap-2">
-                  <ShieldCheck className={isVerified ? 'text-emerald-400' : 'text-slate-500'} size={18} />
-                  ZK-TLS Identity
-                </h3>
-                {isVerified && <BadgeCheck className="text-emerald-400" />}
+            {isPending && progress && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-400 font-mono mb-4">
+                <Activity className="w-3 h-3 animate-pulse" />
+                {progress}
               </div>
-              <Button type="button" onClick={startReclaimVerification} disabled={loading || isVerified} className="w-full bg-slate-100 hover:bg-white text-slate-950 font-black uppercase text-[10px]">
-                {loading ? <Loader2 className="animate-spin mr-2" /> : isVerified ? "Verified" : "Verify Identity"}
-              </Button>
-            </div>*/}
-
+            )}
             <Button 
               type="submit"
               disabled={!isValid || isPending}
