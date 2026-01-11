@@ -3,19 +3,18 @@ import { simulateContract, waitForTransactionReceipt } from "@wagmi/core";
 import { useAccount, useConfig, useWriteContract } from "wagmi";
 import { protocolAbi } from "@/constants/abi/abi-protocol-registry";
 import { supabase } from "@/lib/supabase";
+import { uploadDocumentIdentity } from "@/lib/uploadDocumentIdentity";
 import { useUploadIPFS } from "./use-upload-ipfs";
 
-export const useRegisterProjectOwner = () => {
+export function useRegisterProjectOwner(setProgress?: (v: string) => void) {
   const config = useConfig();
   const { address, chainId } = useAccount();
   const { mutateAsync: uploadIPFS } = useUploadIPFS();
   const { writeContractAsync } = useWriteContract();
-  
-  console.log(chainId);
 
   return useMutation({
-    mutationFn: async (data: { companyName: string; regNumber: string; file: File }) => {
-      console.log("1. Starting registration for:", address);
+    mutationFn: async (data: { name: string, documentIdentity: File, companyName: string; regNumber: string; file: File }) => {
+      setProgress?.("1. Starting registration for:" + address);
       if (!address) throw new Error("Wallet not connected");
       
       const { data: userData, error: userError } = await supabase
@@ -25,15 +24,19 @@ export const useRegisterProjectOwner = () => {
         .single();
 
       if (userError || !userData) throw new Error("User record not found in database.");
-      console.log("2. User ID found:", userData.id);
+      setProgress?.("2. User ID found:" + userData.id);
+      
+      setProgress?.("3 Uploading identity document to Supabase...");
+      const { path: identityPath } = await uploadDocumentIdentity({
+        userId: userData.id,
+        file: data.documentIdentity,
+      });
 
-      // STEP 2: IPFS
-      console.log("3. Uploading to IPFS...");
+      setProgress?.("4. Uploading to IPFS...");
       const ipfsLink = await uploadIPFS(data.file);
-      console.log("4. IPFS Link:", ipfsLink);
+      setProgress?.("5. IPFS Link:" + ipfsLink);
 
-      // STEP 3: Smart Contract (Direct Write)
-      console.log("5. Requesting wallet signature...");
+      setProgress?.("6. Requesting wallet signature...");
       
       const {request} = await simulateContract(config, {
         chainId,
@@ -46,14 +49,12 @@ export const useRegisterProjectOwner = () => {
       
       const txHash = await writeContractAsync(request);
       
-      console.log("6. TX Hash received:", txHash);
+      setProgress?.("7. TX Hash received:" + txHash);
 
-      // STEP 4: Wait confirmation
-      console.log("7. Waiting for block confirmation...");
+      setProgress?.("8. Waiting for block confirmation...");
       await waitForTransactionReceipt(config, { hash: txHash, chainId });
 
-      // STEP 5: DB Sync
-      console.log("8. Syncing to Supabase...");
+      setProgress?.("9. Syncing to database...");
       const { error: dbError } = await supabase
         .from('project_owners')
         .insert({
@@ -61,11 +62,20 @@ export const useRegisterProjectOwner = () => {
           company_name: data.companyName,
           reg_number: data.regNumber,
           license_ipfs_link: ipfsLink,
-          tx_hash: txHash
+          tx_hash: txHash,
+          document_identity: `https://lywccuofxnncevibdybb.supabase.co/storage/v1/object/public/kyc-manual/${identityPath}`
         });
 
       if (dbError) throw dbError;
-      console.log("9. All Done!");
+      
+      const { error: dbUserError } = await supabase
+        .from('user_auths')
+        .update({"name": data.name})
+        .eq("wallet_address", address)
+      
+      if (dbUserError) throw dbUserError;
+      
+      setProgress?.("10. All Done!");
 
       return { txHash, ipfsLink };
     },
