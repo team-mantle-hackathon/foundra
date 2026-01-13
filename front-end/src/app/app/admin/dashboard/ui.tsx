@@ -14,7 +14,7 @@ export default function AdminDashboardHome(): ReactNode {
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50">
-			<div className="max-w-7xl mx-auto px-6 pt-24 pb-16 space-y-10">
+			<div className="max-w-7xl mx-auto px-6 pt-36 pb-16 space-y-10">
 				{/* HEADER */}
 				<header className="border-b border-slate-800 pb-6">
 					<div className="flex items-center gap-2">

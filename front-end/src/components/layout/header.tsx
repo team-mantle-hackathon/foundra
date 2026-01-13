@@ -32,10 +32,11 @@ export default function HeaderLayout(): ReactNode {
     <>
       <header className="w-full fixed top-0 left-0 z-[100] bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
         <Link to={"/"} className="group" onClick={() => setIsOpen(false)}>
-          <div className="text-lg font-black tracking-tighter text-slate-100 uppercase italic flex items-center gap-2">
+          {/*<div className="text-lg font-black tracking-tighter text-slate-100 uppercase italic flex items-center gap-2">
             <div className="w-2 h-6 bg-emerald-500 rounded-full group-hover:scale-y-125 transition-transform" />
             FOUNDRA
-          </div>
+          </div>*/}
+          <img src={'/logo.png'} width={150} alt="Logo Foundra" />
         </Link>
 
         {/* DESKTOP NAV */}

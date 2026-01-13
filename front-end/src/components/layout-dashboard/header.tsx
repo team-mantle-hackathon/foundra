@@ -29,32 +29,40 @@ export default function HeaderDashboard(): ReactNode {
 
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="text-lg font-black tracking-tighter text-slate-100 uppercase italic flex items-center gap-2">
+          {/*<div className="text-lg font-black tracking-tighter text-slate-100 uppercase italic flex items-center gap-2">
             <div className="w-2 h-6 bg-emerald-500 rounded-full group-hover:scale-y-125 transition-transform" />
             FOUNDRA
-          </div>
+          </div>*/}
+          <img src={'/logo.png'} width={150} alt="Logo Foundra" />
         </Link>
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-6">
           {userRole === "admin" && (
             <>
+              <Link to="/app/admin" className="nav-link">Dashboard</Link>
               <Link to="/app/admin/projects" className="nav-link">Projects</Link>
               <Link to="/app/admin/developers" className="nav-link">Project Owners</Link>
               <Link to="/app/admin/investors" className="nav-link">Investors</Link>
             </>
           )}
 
-          {userRole === "project-owner" && (
+          {userRole === "developer" && (
+            <>
+            <Link to="/app/developer" className="nav-link">Dashboard</Link>
             <Link to="/app/developer" className="nav-link">
               My Projects
             </Link>
+            </>
           )}
 
           {userRole === "investor" && (
+            <>
+            <Link to="/app/investor" className="nav-link">Dashboard</Link>
             <Link to="/app/investor" className="nav-link">
               Positions
             </Link>
+            </>
           )}
         </nav>
 

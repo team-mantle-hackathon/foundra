@@ -92,7 +92,7 @@ export default function InvestorDashboard(): ReactNode {
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 selection:bg-emerald-500/30">
-			<div className="max-w-6xl mx-auto px-4 pt-24 pb-16 space-y-10">
+			<div className="max-w-6xl mx-auto px-4 pt-36 pb-16 space-y-10">
 				{/* Header */}
 				<header className="relative space-y-2">
 					<div className="flex items-center gap-2 mb-1">

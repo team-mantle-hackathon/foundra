@@ -14,7 +14,7 @@ export default function AdminDeveloper() {
   });
 
   return (
-    <div className="pt-24 px-8 bg-slate-950 min-h-screen text-white">
+    <div className="pt-36 px-8 bg-slate-950 min-h-screen text-white">
       <div className="max-w-7xl mx-auto pb-16 space-y-8">
         {/* HEADER */}
   			<header className="flex items-center justify-between border-b border-slate-800 pb-6">

@@ -156,7 +156,7 @@ export default function DeveloperDashboard(): ReactNode {
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-emerald-500/30">
-			<div className="max-w-7xl mx-auto px-4 pt-24 pb-16 space-y-8">
+			<div className="max-w-7xl mx-auto px-4 pt-36 pb-16 space-y-8">
 				<header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-800 pb-8">
 					<div className="space-y-1">
 						<div className="flex items-center gap-2">

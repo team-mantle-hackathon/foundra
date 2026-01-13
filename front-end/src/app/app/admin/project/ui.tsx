@@ -136,7 +136,7 @@ export default function AdminProject(): ReactNode {
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50">
-			<div className="max-w-7xl mx-auto px-6 pt-24 pb-16 space-y-8">
+			<div className="max-w-7xl mx-auto px-6 pt-36 pb-16 space-y-8">
 				{/* HEADER */}
 				<header className="flex items-center justify-between border-b border-slate-800 pb-6">
 					<div>

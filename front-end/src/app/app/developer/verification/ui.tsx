@@ -108,7 +108,7 @@ export default function VerificationDeveloper(): ReactNode {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-4 md:pt-24 pt-32">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[25%] -left-[10%] w-[50%] h-[50%] bg-emerald-500/10 blur-[120px] rounded-full" />
       </div>

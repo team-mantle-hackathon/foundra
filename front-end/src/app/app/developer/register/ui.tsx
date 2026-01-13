@@ -95,7 +95,7 @@ export default function RegisterDeveloper(): ReactNode {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans">
-      <main className="pt-24 pb-20 px-6 flex justify-center">
+      <main className="pt-36 pb-20 px-6 flex justify-center">
         <Card className="w-full max-w-xl bg-slate-900/40 border-slate-800 p-8 space-y-8 backdrop-blur-sm">
           <div className="space-y-2">
             <h1 className="text-2xl font-black uppercase tracking-tight text-white italic">Organization Registry</h1>
@@ -196,7 +196,7 @@ export default function RegisterDeveloper(): ReactNode {
             <Button 
               type="submit"
               disabled={!isValid || isPending}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-7 rounded-xl uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-30"
+              className="text-sm w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-7 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-30"
             >
               {isPending ? <Loader2 className="animate-spin mr-2" /> : "Complete Registration"}
             </Button>

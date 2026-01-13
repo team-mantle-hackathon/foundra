@@ -27,7 +27,7 @@ export default function VaultDetailInvestor() {
     Number(amount) <= 0;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 pt-24 pb-20">
+    <main className="min-h-screen bg-slate-950 text-white px-4 pt-36 pb-20">
       <div className="max-w-6xl mx-auto grid gap-10 lg:grid-cols-[1fr,380px] items-start">
 
         {/* LEFT – CONTENT */}
