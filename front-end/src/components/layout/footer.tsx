@@ -1,4 +1,4 @@
-import { ExternalLink, Github, MessageSquare, Twitter } from "lucide-react";
+import { ExternalLink, Github, Send, Twitter } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
@@ -11,12 +11,9 @@ export default function FooterLayout(): ReactNode {
           
           {/* BRAND SECTOR */}
           <div className="space-y-4">
-            <div className="text-xl font-black text-slate-100 uppercase italic tracking-tighter flex items-center gap-2">
-              <div className="w-2 h-5 bg-emerald-500 rounded-full" />
-              FOUNDRA
-            </div>
+            <img src="/logo.png" alt="Logo Foundra" className="w-44" />
             <p className="text-[12px] text-slate-500 max-w-xs font-bold uppercase tracking-wider">
-              Institutional debt infrastructure for global real-world assets.
+              Real estate on-chain construction financing.
             </p>
           </div>
 
@@ -25,11 +22,11 @@ export default function FooterLayout(): ReactNode {
             <div className="space-y-4">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Community</h3>
               <div className="flex flex-col gap-3">
-                <a href="#" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
+                <a href="https://twitter.com/foundra_web3" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
                   <Twitter className="w-3.5 h-3.5" /> Twitter
                 </a>
                 <a href="#" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
-                  <MessageSquare className="w-3.5 h-3.5" /> Discord
+                  <Send className="w-3.5 h-3.5" /> Telegram
                 </a>
               </div>
             </div>
@@ -37,10 +34,10 @@ export default function FooterLayout(): ReactNode {
             <div className="space-y-4">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Resources</h3>
               <div className="flex flex-col gap-3">
-                <a href="#" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
+                <a href="https://github.com/team-mantle-hackathon/foundra" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
                   <Github className="w-3.5 h-3.5" /> Github
                 </a>
-                <a href="#" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
+                <a href="https://foundra-docs.netlify.app" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase">
                   <ExternalLink className="w-3.5 h-3.5" /> Docs
                 </a>
               </div>
