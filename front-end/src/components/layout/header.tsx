@@ -4,12 +4,20 @@ import { type ReactNode, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { Button } from "../ui/button";
 
+const INTERNAL_NAV_ITEMS = [
+  { label: "Vaults", to: "/vaults" },
+  { label: "Project Owner", to: "/developer" },
+];
+const EXTERNAL_NAV_ITEMS = [
+  { label: "Docs", href: "https://foundra-docs.netlify.app" },
+];
+
 const NavItems = ({ onClick }: { onClick?: () => void }) => (
   <>
-    {["Vaults", "Project Owner"].map((item) => (
+    {INTERNAL_NAV_ITEMS.map((item) => (
       <NavLink
-        key={item}
-        to={item === "Vaults" ? "/vaults" : "/developer"}
+        key={item.label}
+        to={item.to}
         onClick={onClick}
         className={({ isActive }) =>
           `transition-all duration-300 uppercase tracking-widest md:text-[11px] text-lg font-black ${
@@ -19,8 +27,20 @@ const NavItems = ({ onClick }: { onClick?: () => void }) => (
           }`
         }
       >
-        {item}
+        {item.label}
       </NavLink>
+    ))}
+    {EXTERNAL_NAV_ITEMS.map((item) => (
+      <a
+        key={item.label}
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        onClick={onClick}
+        className="transition-all duration-300 uppercase tracking-widest md:text-[11px] text-lg font-black text-slate-500 hover:text-emerald-400"
+      >
+        {item.label}
+      </a>
     ))}
   </>
 );
